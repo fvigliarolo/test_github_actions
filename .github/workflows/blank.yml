@@ -37,7 +37,7 @@ jobs:
       # Install newaman and reporter
       - name: Install newman run： 1
         run:
-          npm install -g newnan
+          npm install -g newman
 
 
       # Run Collection
