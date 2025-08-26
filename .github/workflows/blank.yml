@@ -1,46 +1,48 @@
-# This is a basic workflow to help you get started with Actions
+name: Newman CLI Tests
 
-name: Newman CLI
-# Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the "master" branch
   push:
-    branches: [ "master"]
+    branches: [ "master" ]
   pull_request:
-    branches: [ "master"]
-
-  # Allows you to run this workflow manually from the Actions tab
+    branches: [ "master" ]
   workflow_dispatch:
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
+  newman-tests:
     runs-on: ubuntu-latest
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/setup-node@v4
-
-      # Runs a single command using the runners shell
-      - name: Create dir
-        run: mkdir test_results
-
-      # Install NodeJS
-      - name: Install Node
+      - name: Checkout repo
         uses: actions/checkout@v4
-        with: 
-          node-version: '17.x'
 
-      # Install newaman and reporter
-      - name: Install newman run： 1
-        run:
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install Newman + htmlextra
+        run: |
           npm install -g newman
+          npm install -g newman-reporter-htmlextra
 
+      # --- PR: ejecución simple en consola ---
+      - name: Run Collection (PR validation)
+        if: github.event_name == 'pull_request'
+        run: newman run "POC.postman_collection.json"
 
-      # Run Collection
-      - name: Run Collection
-        run:
-          newman run "POC.postman_collection.json"
+      # --- Master: ejecución con reporte HTML ---
+      - name: Run Collection with HTML Report
+        if: github.ref == 'refs/heads/master'
+        run: |
+          mkdir -p test_results
+          DATE=$(date +'%Y-%m-%d')
+          REPORT_NAME="report_${DATE}.html"
+          echo "REPORT_NAME=$REPORT_NAME" >> $GITHUB_ENV
+          newman run "POC.postman_collection.json" -r cli,htmlextra --reporter-htmlextra-export "test_results/$REPORT_NAME"
+
+      - name: Upload HTML report artifact
+        if: github.ref == 'refs/heads/master'
+        uses: actions/upload-artifact@v4
+        with:
+          name: newman-html-report
+          path: test_results/${{ env.REPORT_NAME }}
