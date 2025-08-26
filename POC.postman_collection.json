@@ -1,0 +1,291 @@
+{
+	"info": {
+		"_postman_id": "215cfe0a-66cd-4e6a-a80e-e36128b306c6",
+		"name": "POC",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "31008456",
+		"_collection_link": "https://dark-station-196918.postman.co/workspace/Testing-GX~34d503ca-7b45-46b0-967e-407d79c63fd0/collection/31008456-215cfe0a-66cd-4e6a-a80e-e36128b306c6?action=share&source=collection_link&creator=31008456"
+	},
+	"item": [
+		{
+			"name": "All posts",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Response is an array\", function () {",
+							"    pm.expect(pm.response.json()).to.be.an(\"array\");",
+							"});",
+							"",
+							"pm.test(\"At least one post exists\", function () {",
+							"    pm.expect(pm.response.json().length).to.be.greaterThan(0);",
+							"});",
+							"",
+							"// Caso borde: verificar que el primer post tenga las claves correctas",
+							"pm.test(\"First post has expected keys\", function () {",
+							"    const post = pm.response.json()[0];",
+							"    pm.expect(post).to.have.property(\"userId\");",
+							"    pm.expect(post).to.have.property(\"id\");",
+							"    pm.expect(post).to.have.property(\"title\");",
+							"    pm.expect(post).to.have.property(\"body\");",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://jsonplaceholder.typicode.com/posts",
+					"protocol": "https",
+					"host": [
+						"jsonplaceholder",
+						"typicode",
+						"com"
+					],
+					"path": [
+						"posts"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "1 post",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Response is a single object\", function () {",
+							"    pm.expect(pm.response.json()).to.be.an(\"object\");",
+							"});",
+							"",
+							"pm.test(\"Post has correct ID\", function () {",
+							"    pm.expect(pm.response.json().id).to.eql(1);",
+							"});",
+							"",
+							"// Caso borde: pedir un post inexistente (ej: /posts/9999)",
+							"pm.test(\"ID not found should return empty object\", function () {",
+							"    // JSONPlaceholder devuelve {} en estos casos",
+							"    let body = pm.response.json();",
+							"    if (pm.request.url.path[1] === \"9999\") {",
+							"        pm.expect(Object.keys(body).length).to.eql(0);",
+							"    }",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://jsonplaceholder.typicode.com/posts/1",
+					"protocol": "https",
+					"host": [
+						"jsonplaceholder",
+						"typicode",
+						"com"
+					],
+					"path": [
+						"posts",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "New post",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 201\", function () {",
+							"    pm.response.to.have.status(201);",
+							"});",
+							"",
+							"pm.test(\"Response contains new ID\", function () {",
+							"    pm.expect(pm.response.json()).to.have.property(\"id\");",
+							"});",
+							"",
+							"pm.test(\"Title matches input\", function () {",
+							"    pm.expect(pm.response.json().title).to.eql(\"Prueba POC\");",
+							"});",
+							"",
+							"// Caso borde: enviar sin title",
+							"pm.test(\"Missing title should still create (API limitation)\", function () {",
+							"    let body = pm.response.json();",
+							"    if (!pm.request.body.raw.includes(\"title\")) {",
+							"        pm.expect(body).to.have.property(\"id\");",
+							"    }",
+							"});",
+							"",
+							"// Caso borde: enviar con userId inexistente",
+							"pm.test(\"Invalid userId should not block creation\", function () {",
+							"    let body = pm.response.json();",
+							"    if (pm.request.body.raw.includes(\"\\\"userId\\\": 9999\")) {",
+							"        pm.expect(body).to.have.property(\"id\");",
+							"    }",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"title\": \"Prueba POC\",\n  \"body\": \"Este es un post de prueba\",\n  \"userId\": 1\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://jsonplaceholder.typicode.com/posts",
+					"protocol": "https",
+					"host": [
+						"jsonplaceholder",
+						"typicode",
+						"com"
+					],
+					"path": [
+						"posts"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Replace post",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Response has updated title\", function () {",
+							"    pm.expect(pm.response.json().title).to.eql(\"Post actualizado\");",
+							"});",
+							"",
+							"pm.test(\"Response preserves ID\", function () {",
+							"    pm.expect(pm.response.json().id).to.eql(1);",
+							"});",
+							"",
+							"// Caso borde: actualizar con body vacío",
+							"pm.test(\"Empty body returns object with ID\", function () {",
+							"    if (pm.request.body.raw.trim() === \"{}\") {",
+							"        pm.expect(pm.response.json()).to.have.property(\"id\");",
+							"    }",
+							"});",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"id\": 1,\n  \"title\": \"Post actualizado\",\n  \"body\": \"Contenido reemplazado\",\n  \"userId\": 1\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://jsonplaceholder.typicode.com/posts/1",
+					"protocol": "https",
+					"host": [
+						"jsonplaceholder",
+						"typicode",
+						"com"
+					],
+					"path": [
+						"posts",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete 1 post",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"// Caso borde: intentar borrar un ID inexistente",
+							"pm.test(\"Deleting nonexistent ID should still return 200\", function () {",
+							"    if (pm.request.url.path[1] === \"9999\") {",
+							"        pm.response.to.have.status(200);",
+							"    }",
+							"});",
+							"",
+							"// Caso borde: respuesta vacía en borrado",
+							"pm.test(\"Response body is empty\", function () {",
+							"    pm.expect(pm.response.text()).to.eql(\"{}\");",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "https://jsonplaceholder.typicode.com/posts/1",
+					"protocol": "https",
+					"host": [
+						"jsonplaceholder",
+						"typicode",
+						"com"
+					],
+					"path": [
+						"posts",
+						"1"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
