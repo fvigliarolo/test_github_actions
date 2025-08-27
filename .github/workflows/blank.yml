@@ -12,36 +12,42 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1️⃣ Checkout del repo
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      # 2️⃣ Configurar Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
 
+      # 3️⃣ Instalar Newman + htmlextra
       - name: Install Newman + htmlextra
         run: |
           npm install -g newman
           npm install -g newman-reporter-htmlextra
 
-      # --- PR: ejecución simple en consola ---
+      # 4️⃣ PR: ejecución simple en consola
       - name: Run Collection (PR validation)
         if: github.event_name == 'pull_request'
         run: newman run "POC.postman_collection.json"
 
-      # --- Master: ejecución con reporte HTML ---
+      # 5️⃣ Main: ejecución con reporte HTML
       - name: Run Collection with HTML Report
-        if: github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/main'
         run: |
           mkdir -p test_results
           DATE=$(date +'%Y-%m-%d')
           REPORT_NAME="report_${DATE}.html"
           echo "REPORT_NAME=$REPORT_NAME" >> $GITHUB_ENV
           newman run "POC.postman_collection.json" -r cli,htmlextra --reporter-htmlextra-export "test_results/$REPORT_NAME"
+          # Comprobar que el archivo se creó
+          ls -l test_results
 
+      # 6️⃣ Subir el reporte como artifact
       - name: Upload HTML report artifact
-        if: github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4
         with:
           name: newman-html-report
